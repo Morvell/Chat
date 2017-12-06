@@ -1,0 +1,9 @@
+YOUR_PORT = 60001
+SEND_PORT = 60002
+YOUR_IP = 'localhost'
+SEND_IP = 'localhost'
+NICKNAME = 'User123'
+FILENAME = '1.txt'
+DATA_ARRAY = []
+NICK_ARRAY = []
+DATA_DICT = {}
