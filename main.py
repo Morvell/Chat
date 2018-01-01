@@ -2,22 +2,27 @@ from tkinter import *
 import sys
 import socket
 import json
+
+import time
+
 from enterwindow import enterwindow
 import veriable
 import base64
 import threading
 from veriable import DATA_ARRAY, NICK_ARRAY, DATA_DICT
 
+
 def smiley():
     """
     вставляет смайлик в TEXT окно
     """
-    cv = Canvas(height=30,width=30)
-    cv.create_oval(1,1,29,29,fill="yellow")
-    cv.create_oval(9,10,12,12)
-    cv.create_oval(19,10,22,12)
-    cv.create_polygon(9,20,15,24,22,20)
-    log.window_create(CURRENT,window=cv)
+    cv = Canvas(height=30, width=30)
+    cv.create_oval(1, 1, 29, 29, fill="yellow")
+    cv.create_oval(9, 10, 12, 12)
+    cv.create_oval(19, 10, 22, 12)
+    cv.create_polygon(9, 20, 15, 24, 22, 20)
+    log.window_create(CURRENT, window=cv)
+
 
 class Client:
     """
@@ -41,15 +46,15 @@ class Client:
             (veriable.SEND_IP, veriable.SEND_PORT))
         print("You may send are message")
 
-    def arrinstr(self,arr):
+    def arrinstr(self, arr):
         """
         парсит массив в строку
         :param arr: массив чаров
         :return: возвращаяет строку
         """
-        str=''
+        str = ''
         for e in arr:
-            str = str + ' '+ e
+            str = str + ' ' + e
         return str
 
     def new_thread(self, event):
@@ -61,50 +66,59 @@ class Client:
         msg = text.get()
 
         if str(msg) == ':)':
-            log.insert(END,'I:')
+            log.insert(END, 'I:')
             smiley()
-            log.insert(END,'\n')
+            log.insert(END, '\n')
             for addres in DATA_ARRAY:
                 if addres != [veriable.YOUR_IP, veriable.YOUR_PORT]:
-                    self.s.sendto(json.dumps([veriable.NICKNAME,':)']).encode(),
+                    self.s.sendto(
+                        json.dumps([veriable.NICKNAME, ':)']).encode(),
                         (addres[0], addres[1]))
 
 
         elif str(msg).split(' ')[0] == '-pm:':
             splitmsg = str(msg).split(' ')
             for e in self.splitnick(splitmsg):
-                self.s.sendto(json.dumps('privat message: ' + self.splitmessage(splitmsg) + ' |from ' + veriable.NICKNAME).encode(),
-                    ( DATA_DICT[e][0], DATA_DICT[e][1]))
-            self.s.sendto(json.dumps('privat message: ' + self.splitmessage(splitmsg) + ' |to '+ self.arrinstr(self.splitnick(splitmsg))).encode(),
-                (veriable.YOUR_IP, veriable.YOUR_PORT))
+                self.s.sendto(json.dumps(
+                    'privat message: ' + self.splitmessage(
+                        splitmsg) + ' |from ' + veriable.NICKNAME).encode(),
+                              (DATA_DICT[e][0], DATA_DICT[e][1]))
+            self.s.sendto(json.dumps('privat message: ' + self.splitmessage(
+                splitmsg) + ' |to ' + self.arrinstr(
+                self.splitnick(splitmsg))).encode(),
+                          (veriable.YOUR_IP, veriable.YOUR_PORT))
 
 
-        elif str(msg)=='-intochat':
+        elif str(msg) == '-intochat':
             log.insert(END, 'into chat: ')
             for e in NICK_ARRAY:
                 log.insert(END, e + ', ')
             log.insert(END, '\n')
-        elif str(msg).split(' ')[0] == '-sendfile'\
+        elif str(msg).split(' ')[0] == '-sendfile' \
                 and len(str(msg).split(' ')) == 2:
 
             for addres in DATA_ARRAY:
-                if (addres[0], addres[1]) != (veriable.YOUR_IP, veriable.YOUR_PORT):
+                if (addres[0], addres[1]) != (
+                veriable.YOUR_IP, veriable.YOUR_PORT):
                     self.s.sendto(json.dumps(['-sendfile',
-                                              str(msg).split(' ')[1]]).encode(),
-                                            (addres[0], addres[1]))
+                                              str(msg).split(' ')[
+                                                  1]]).encode(),
+                                  (addres[0], addres[1]))
 
             self.sendfile(str(msg).split(' ')[1])
-        elif str(msg).split(' ')[0] == '-sendfile' and len(str(msg).split(' ')) != 2:
+        elif str(msg).split(' ')[0] == '-sendfile' and len(
+                str(msg).split(' ')) != 2:
             self.s.sendto(json.dumps('Введены некоректные данные').encode(),
-                (veriable.YOUR_IP, veriable.YOUR_PORT))
+                          (veriable.YOUR_IP, veriable.YOUR_PORT))
         else:
             for addres in DATA_ARRAY:
                 if addres != [veriable.YOUR_IP, veriable.YOUR_PORT]:
-                    self.s.sendto(json.dumps(veriable.NICKNAME + ': ' + msg).encode(),
+                    self.s.sendto(
+                        json.dumps(veriable.NICKNAME + ': ' + msg).encode(),
                         (addres[0], addres[1]))
                 else:
                     self.s.sendto(json.dumps("I" + ': ' + msg).encode(),
-                        (addres[0], addres[1]))
+                                  (addres[0], addres[1]))
 
         text.set('')
 
@@ -115,28 +129,31 @@ class Client:
         :return: none
         """
 
-        file = open(filename, "rb")
-        while True:
-
-            buf = file.read(40)
-            if len(buf) == 0:
-                print('into break')
-                break
-            str = base64.b64encode(buf)
-            self.s.sendto(str, (veriable.SEND_IP, veriable.SEND_PORT))
-            print('into while send')
-
+        with open(filename, "rb") as file:
+            i = 0
+            while True:
+                buf = file.read(1024 * 5)
+                if len(buf) == 0:
+                    print('into break')
+                    break
+                for addres in DATA_ARRAY:
+                    if (addres[0], addres[1]) != (
+                            veriable.YOUR_IP, veriable.YOUR_PORT):
+                        self.s.sendto(buf, (addres[0], addres[1]))
+                time.sleep(0.005)
+                print(i)
+                print(buf)
+                i += 1
+                print('into while send')
         for addres in DATA_ARRAY:
-            if (addres[0], addres[1]) != (veriable.YOUR_IP, veriable.YOUR_PORT):
-                self.s.sendto(base64.b64encode('endfile'.encode()), (addres[0], addres[1]))
+            if (addres[0], addres[1]) != (
+            veriable.YOUR_IP, veriable.YOUR_PORT):
+                self.s.sendto(b'endfile', (addres[0], addres[1]))
 
         for addres in DATA_ARRAY:
             if addres != [veriable.YOUR_IP, veriable.YOUR_PORT]:
                 self.s.sendto(json.dumps("файл передан").encode(),
-                    (addres[0], addres[1]))
-
-        file.close()
-
+                              (addres[0], addres[1]))
 
     def splitmessage(self, array):
         """
@@ -145,14 +162,14 @@ class Client:
         отделяет тест сообщения от вспомогательных слов
         """
         newarr = []
-        message=''
+        message = ''
         try:
-            newarr=array[array.index('-pm:')+1:array.index('-to')]
+            newarr = array[array.index('-pm:') + 1:array.index('-to')]
             for e in newarr:
-                message = message+' '+e
+                message = message + ' ' + e
             return message
         except Exception:
-            log.insert(END,'ошибка ввода')
+            log.insert(END, 'ошибка ввода')
             return []
 
     def splitnick(self, array):
@@ -164,13 +181,11 @@ class Client:
         newarr = []
 
         try:
-            newarr = array[array.index('-to')+1:]
+            newarr = array[array.index('-to') + 1:]
             return newarr
         except Exception:
             log.insert(END, 'input error')
             return []
-
-
 
 
 class Server:
@@ -239,10 +254,14 @@ class Server:
         """
 
         for e in DATA_ARRAY:
-            self.s.sendto(json.dumps(veriable.NICKNAME + ' disconnected to chat').encode(), (e[0], e[1]))
+            self.s.sendto(json.dumps(
+                veriable.NICKNAME + ' disconnected to chat').encode(),
+                          (e[0], e[1]))
         for e in DATA_ARRAY:
-            self.s.sendto(json.dumps([veriable.YOUR_IP, veriable.YOUR_PORT, veriable.NICKNAME, 'exit']).encode(),
-                (e[0], e[1]))
+            self.s.sendto(json.dumps(
+                [veriable.YOUR_IP, veriable.YOUR_PORT, veriable.NICKNAME,
+                 'exit']).encode(),
+                          (e[0], e[1]))
 
     def addindict(self, nick, e1, e2):
         """
@@ -276,38 +295,53 @@ class Server:
             self.data = json.loads(self.streamdata[0].decode())
             self.addr = self.streamdata[1]
 
-            if isinstance(self.data, list) and len(self.data) == 3 and isinstance(self.data[2], str):
+            if isinstance(self.data, list) and len(
+                    self.data) == 3 and isinstance(self.data[2], str):
                 self.checkdata([self.data[0], self.data[1]])
                 self.addnickname(self.data[2])
-                self.addindict(self.data[2],self.data[0],self.data[1])
+                self.addindict(self.data[2], self.data[0], self.data[1])
                 for e in DATA_ARRAY:
                     if (e[0], e[1]) != (veriable.YOUR_IP, veriable.YOUR_PORT):
-                        self.s.sendto(json.dumps([DATA_ARRAY, NICK_ARRAY]).encode(), (e[0], e[1]))
+                        self.s.sendto(
+                            json.dumps([DATA_ARRAY, NICK_ARRAY]).encode(),
+                            (e[0], e[1]))
                 self.senddict()
 
-
-
                 for e in DATA_ARRAY:
-                    self.s.sendto(json.dumps(self.data[2] + ' connect to chat').encode(), (e[0], e[1]))
+                    self.s.sendto(
+                        json.dumps(self.data[2] + ' connect to chat').encode(),
+                        (e[0], e[1]))
 
                 tk.after(1, self.new_thread)
                 return
-            elif isinstance(self.data, list) and len(self.data) == 4 and isinstance(self.data[3], str):
+            elif isinstance(self.data, list) and len(
+                    self.data) == 4 and isinstance(self.data[3], str):
                 self.deletedata([self.data[0], self.data[1]])
                 self.deletenickname(self.data[2])
                 for e in DATA_ARRAY:
-                    self.s.sendto(json.dumps([DATA_ARRAY,NICK_ARRAY]).encode(), (e[0], e[1]))
+                    self.s.sendto(
+                        json.dumps([DATA_ARRAY, NICK_ARRAY]).encode(),
+                        (e[0], e[1]))
                 tk.after(1, self.new_thread)
                 return
-            elif isinstance(self.data, list) and len(self.data) == 2 and self.data[0] == '-sendfile':
-                self.getfile(self.data[1])
+            elif isinstance(self.data, list) and len(self.data) == 2 and \
+                            self.data[0] == '-sendfile':
+                try:
+                    # msg.bind('<Return>', None)
+                    self.getfile(self.data[1])
+                except Exception as e:
+                    # msg.bind('<Return>', CLT.new_thread)
+                    print(e)
                 for addres in DATA_ARRAY:
-                    if (addres[0], addres[1]) != (veriable.YOUR_IP, veriable.YOUR_PORT):
-                        self.s.sendto(json.dumps("файл получен").encode(), (addres[0], addres[1]))
-            elif isinstance(self.data,list) and self.data[1] == ':)':
-                log.insert(END, self.data[0]+':')
+                    if (addres[0], addres[1]) != (
+                    veriable.YOUR_IP, veriable.YOUR_PORT):
+                        self.s.sendto(json.dumps("файл получен").encode(),
+                                      (addres[0], addres[1]))
+                # msg.bind('<Return>', CLT.new_thread)
+            elif isinstance(self.data, list) and self.data[1] == ':)':
+                log.insert(END, self.data[0] + ':')
                 smiley()
-                log.insert(END,'\n')
+                log.insert(END, '\n')
 
             elif isinstance(self.data, list):
                 DATA_ARRAY = self.data[0]
@@ -330,31 +364,34 @@ class Server:
         :param filename: имя файла
         :return: none
         """
+        with open(str(filename).split('/')[1], "wb") as file:
+            i = 0
+            buf = 1
+            while buf:
+                self.s.settimeout(30)
+                buf = self.s.recv(1024 * 100)
+                str1 = buf
+                try:
+                    if str1 == b"endfile":
+                        print('into end')
+                        break
+                except UnicodeDecodeError:
+                    print('unicod')
+                    continue
+                except Exception:
+                    print('error')
+                file.write(str1)
 
-        file = open('D:\\' + str(filename).split('\\')[1], "wb")
-        while True:
-            buf = self.s.recv(1024)
-            str1 = base64.b64decode(buf)
-            try:
-                if str1.decode() == 'endfile':
-                    print('into end')
-                    break
-            except UnicodeDecodeError:
-                print('unicod')
-                pass
-            except Exception:
-                print('error')
-            file.write(str1)
-            print('into while')
+                print(i)
+                print(str1)
+                i += 1
+                print('into while')
 
         print('all get')
 
 
 enterwindow()
 tk = Tk()
-
-
-
 
 text = StringVar()
 name = StringVar()
@@ -371,7 +408,7 @@ log.pack(side='top', fill='both', expand='true')
 
 DATA_ARRAY.append([veriable.YOUR_IP, veriable.YOUR_PORT])
 NICK_ARRAY.append(veriable.NICKNAME)
-DATA_DICT[veriable.NICKNAME] = (veriable.YOUR_IP,veriable.YOUR_PORT)
+DATA_DICT[veriable.NICKNAME] = (veriable.YOUR_IP, veriable.YOUR_PORT)
 
 SRV = Server()
 CLT = Client()
