@@ -57,6 +57,11 @@ class Client:
             str = str + ' ' + e
         return str
 
+    def confirm_message(self,message):
+        self.s.settimeout(1)
+        data = self.s.recv(1024)
+        return data == message
+
     def new_thread(self, event):
         """
         обрабатывает ввод сообщения,
@@ -74,6 +79,8 @@ class Client:
                     self.s.sendto(
                         json.dumps([veriable.NICKNAME, ':)']).encode(),
                         (addres[0], addres[1]))
+                    if not self.confirm_message(b'yes'):
+                        log.insert(END, 'Сообщение не доставлено\n')
 
 
         elif str(msg).split(' ')[0] == '-pm:':
@@ -116,6 +123,8 @@ class Client:
                     self.s.sendto(
                         json.dumps(veriable.NICKNAME + ': ' + msg).encode(),
                         (addres[0], addres[1]))
+                    if not self.confirm_message(b"yes"):
+                        log.insert(END, 'Cообщение не доставлено\n')
                 else:
                     self.s.sendto(json.dumps("I" + ': ' + msg).encode(),
                                   (addres[0], addres[1]))
@@ -131,6 +140,7 @@ class Client:
 
         with open(filename, "rb") as file:
             i = 0
+            self.s.settimeout(5)
             while True:
                 buf = file.read(1024 * 5)
                 if len(buf) == 0:
@@ -140,8 +150,14 @@ class Client:
                     if (addres[0], addres[1]) != (
                             veriable.YOUR_IP, veriable.YOUR_PORT):
                         self.s.sendto(buf, (addres[0], addres[1]))
+
+                while self.s.recv(1024) != bytes(buf[0]):
+                    for addres in DATA_ARRAY:
+                        if (addres[0], addres[1]) != (
+                                veriable.YOUR_IP, veriable.YOUR_PORT):
+                            self.s.sendto(buf, (addres[0], addres[1]))
                 time.sleep(0.005)
-                print(i)
+                print(buf[0])
                 print(buf)
                 i += 1
                 print('into while send')
@@ -342,6 +358,7 @@ class Server:
                 log.insert(END, self.data[0] + ':')
                 smiley()
                 log.insert(END, '\n')
+                self.s.sendto(b'yes',self.addr)
 
             elif isinstance(self.data, list):
                 DATA_ARRAY = self.data[0]
@@ -350,6 +367,7 @@ class Server:
                 DATA_DICT = self.data
 
             log.insert(END, self.data + '\n')
+            self.s.sendto(b'yes', self.addr)
 
         except Exception:
             tk.after(1, self.new_thread)
@@ -367,22 +385,25 @@ class Server:
         with open(str(filename).split('/')[1], "wb") as file:
             i = 0
             buf = 1
+            lastbuf=1
             while buf:
                 self.s.settimeout(30)
-                buf = self.s.recv(1024 * 100)
+                buf, addr = self.s.recvfrom(1024 * 100)
+                if buf == lastbuf:
+                    continue
                 str1 = buf
+                number = buf[0]
+                lastbuf = buf
+                self.s.sendto(bytes(number), addr)
                 try:
                     if str1 == b"endfile":
                         print('into end')
                         break
-                except UnicodeDecodeError:
-                    print('unicod')
-                    continue
                 except Exception:
                     print('error')
                 file.write(str1)
 
-                print(i)
+                print(addr)
                 print(str1)
                 i += 1
                 print('into while')
