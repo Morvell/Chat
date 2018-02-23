@@ -1,15 +1,10 @@
-from tkinter import *
-import sys
-import socket
 import json
-
+import socket
 import time
+from tkinter import *
 
-from enterwindow import enterwindow
 import veriable
-import base64
-import threading
-from veriable import DATA_ARRAY, NICK_ARRAY, DATA_DICT
+from enterwindow import enterwindow
 
 
 def smiley():
@@ -57,7 +52,7 @@ class Client:
             str = str + ' ' + e
         return str
 
-    def confirm_message(self,message):
+    def confirm_message(self, message):
         self.s.settimeout(1)
         data = self.s.recv(1024)
         return data == message
@@ -82,7 +77,6 @@ class Client:
                     if not self.confirm_message(b'yes'):
                         log.insert(END, 'Сообщение не доставлено\n')
 
-
         elif str(msg).split(' ')[0] == '-pm:':
             splitmsg = str(msg).split(' ')
             for e in self.splitnick(splitmsg):
@@ -95,7 +89,6 @@ class Client:
                 self.splitnick(splitmsg))).encode(),
                           (veriable.YOUR_IP, veriable.YOUR_PORT))
 
-
         elif str(msg) == '-intochat':
             log.insert(END, 'into chat: ')
             for e in NICK_ARRAY:
@@ -106,7 +99,7 @@ class Client:
 
             for addres in DATA_ARRAY:
                 if (addres[0], addres[1]) != (
-                veriable.YOUR_IP, veriable.YOUR_PORT):
+                        veriable.YOUR_IP, veriable.YOUR_PORT):
                     self.s.sendto(json.dumps(['-sendfile',
                                               str(msg).split(' ')[
                                                   1]]).encode(),
@@ -163,7 +156,7 @@ class Client:
                 print('into while send')
         for addres in DATA_ARRAY:
             if (addres[0], addres[1]) != (
-            veriable.YOUR_IP, veriable.YOUR_PORT):
+                    veriable.YOUR_IP, veriable.YOUR_PORT):
                 self.s.sendto(b'endfile', (addres[0], addres[1]))
 
         for addres in DATA_ARRAY:
@@ -232,8 +225,10 @@ class Server:
 
     def checkdata(self, data):
         """
-        Проверяет, существует ли такой пользователь в базе данных, и если нет, то добаляет его
-        :param data: пользователь которго нужно проверить на наличие в базе пользователей(массив типа [ip,port,nikname]
+        Проверяет, существует ли такой пользователь в базе данных, и если нет,
+        то добаляет его
+        :param data: пользователь которго нужно проверить на наличие в базе
+        пользователей(массив типа [ip,port,nikname]
         :return: none
         """
         if data not in DATA_ARRAY:
@@ -257,14 +252,16 @@ class Server:
     def deletedata(self, data):
         """
         удаляет пользователя из базы пользователей
-        :param data: пользователь которго нужно удалить(массив типа [ip,port,nikname]
+        :param data: пользователь которго нужно
+        удалить(массив типа [ip,port,nikname]
         :return: none
         """
         DATA_ARRAY.pop(DATA_ARRAY.index(data))
 
     def exit(self, event):
         """
-        обработка нажатия на крестик. Отправляет всем пользователям данные о выходе из чата
+        обработка нажатия на крестик. Отправляет всем пользователям данные
+        о выходе из чата
         :param event: не нужно вводить. Пременная для tkinter
         :return:
         """
@@ -340,8 +337,8 @@ class Server:
                         (e[0], e[1]))
                 tk.after(1, self.new_thread)
                 return
-            elif isinstance(self.data, list) and len(self.data) == 2 and \
-                            self.data[0] == '-sendfile':
+            elif isinstance(self.data, list) and len(self.data) == 2 \
+                    and self.data[0] == '-sendfile':
                 try:
                     # msg.bind('<Return>', None)
                     self.getfile(self.data[1])
@@ -350,15 +347,15 @@ class Server:
                     print(e)
                 for addres in DATA_ARRAY:
                     if (addres[0], addres[1]) != (
-                    veriable.YOUR_IP, veriable.YOUR_PORT):
+                            veriable.YOUR_IP, veriable.YOUR_PORT):
                         self.s.sendto(json.dumps("файл получен").encode(),
                                       (addres[0], addres[1]))
-                # msg.bind('<Return>', CLT.new_thread)
+                        # msg.bind('<Return>', CLT.new_thread)
             elif isinstance(self.data, list) and self.data[1] == ':)':
                 log.insert(END, self.data[0] + ':')
                 smiley()
                 log.insert(END, '\n')
-                self.s.sendto(b'yes',self.addr)
+                self.s.sendto(b'yes', self.addr)
 
             elif isinstance(self.data, list):
                 DATA_ARRAY = self.data[0]
@@ -385,7 +382,7 @@ class Server:
         with open(str(filename).split('/')[1], "wb") as file:
             i = 0
             buf = 1
-            lastbuf=1
+            lastbuf = 1
             while buf:
                 self.s.settimeout(30)
                 buf, addr = self.s.recvfrom(1024 * 100)

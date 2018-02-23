@@ -1,10 +1,6 @@
-__author__ = 'Захаров <Jormungand> Андрей'
-from tkinter import *
-
-import sys
-import socket
 import json
-
+import socket
+from tkinter import *
 
 global YourPort
 global nickname
@@ -14,16 +10,15 @@ global SendIp
 dataarray = []
 
 
-
 class Client:
-    '''
+    """
     Класс клиент. Осуществляет отправку данных
-    '''
+    """
 
     def __init__(self):
-        '''
+        """
         Создает сокет и отправляет сокету-получателю свои данные(порт и ip)
-        '''
+        """
         try:
             self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         except socket.error:
@@ -33,46 +28,46 @@ class Client:
         self.s.sendto(json.dumps(dataarray).encode(), (SendIp, SendPort))
         print("You may send are message")
 
+    def New_Thread(self, event):
+        """
+        обрабатывает ввод сообщения и отправляет сообшение
+        всем подключенным пользователям
+        """
 
-    def New_Thread(self,event):
-        '''
-        обрабатывает ввод сообщения и отправляет сообшение всем подключенным пользователям
-        '''
-
-
-        msg=text.get()
+        msg = text.get()
         for addres in dataarray:
-            if addres != [YourIp,YourPort]:
-                self.s.sendto(json.dumps(nickname + ': ' + msg).encode(), (addres[0], addres[1]))
+            if addres != [YourIp, YourPort]:
+                self.s.sendto(json.dumps(nickname + ': ' + msg).encode(),
+                              (addres[0], addres[1]))
             else:
-                self.s.sendto(json.dumps("I" + ': ' + msg).encode(), (addres[0], addres[1]))
+                self.s.sendto(json.dumps("I" + ': ' + msg).encode(),
+                              (addres[0], addres[1]))
 
         text.set('')
 
 
-
 class Server:
-    '''
+    """
     Сервер. Получает данные с других сокетов и обрабатывает их
-    '''
-
+    """
     def checkdata(self, data):
-        '''
-        Проверяет, существует ли такой пользователь в базе данных, и если нет, то добаляет его
-        '''
+        """
+        Проверяет, существует ли такой пользователь в базе данных, и если нет,
+        то добаляет его
+        """
         if None in dataarray:
             dataarray.append(data)
-        if not data in dataarray:
+        if data not in dataarray:
             dataarray.append(data)
 
-    def exit(self,event):
+    def exit(self, event):
         print('Exit')
         return
 
     def __init__(self):
-        '''
+        """
         инициализирут сокет для получения данных
-        '''
+        """
 
         try:
             self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -91,10 +86,10 @@ class Server:
         print('Socket bind complete')
 
     def New_Thread(self):
-        '''
+        """
         получает данные и обрабатывает их. если поевляется новый пользователь,
         отправляет существующим новый список участников
-        '''
+        """
         global dataarray
         self.s.setblocking(False)
         try:
@@ -122,10 +117,7 @@ class Server:
         return
 
 
-
-
-
-tk=Tk()
+tk = Tk()
 
 text = StringVar()
 name = StringVar()
@@ -135,7 +127,7 @@ tk.title('Chat')
 tk.geometry('400x300')
 
 log = Text(tk)
-ex= Entry(tk)
+ex = Entry(tk)
 nick = Entry(tk, textvariable=name)
 msg = Entry(tk, textvariable=text)
 msg.pack(side='bottom', fill='x', expand='true')
@@ -157,17 +149,12 @@ YourIp = 'localhost'
 SendIp = 'localhost'
 nickname = 'Добряк'
 
-
 dataarray.append([YourIp, YourPort])
-
-
 
 SRV = Server()
 CLT = Client()
 
-
 msg.bind('<Return>', CLT.New_Thread)
 tk.after(1, SRV.New_Thread)
-ex.bind('<Destroy>',SRV.exit)
+ex.bind('<Destroy>', SRV.exit)
 tk.mainloop()
-

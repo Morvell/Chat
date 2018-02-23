@@ -6,7 +6,6 @@ import socket
 import threading
 import json
 
-
 global YourPort
 global nikname
 global SendPort
@@ -21,7 +20,8 @@ class Client:
     '''
 
     def __init__(self):
-        '''Создает сокет и отправляет сокету-получателю свои данные(порт и ip)'''
+        """Создает сокет и отправляет сокету-получателю
+        свои данные(порт и ip)"""
         try:
             self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         except socket.error:
@@ -33,16 +33,18 @@ class Client:
 
         self.s.sendto(json.dumps(dataarray).encode(), (SendIp, SendPort))
 
-
     def New_Thread(self):
-        '''обрабатывает ввод сообщения и отправляет всем подключенным пользователям'''
-        while (1):
+        """обрабатывает ввод сообщения и
+        отправляет всем подключенным пользователям"""
+        while 1:
             self.msg = input()
 
             try:
                 for addres in dataarray:
                     if addres != [YourIp, YourPort]:
-                        self.s.sendto(json.dumps(nikname + ': ' + self.msg).encode(), (addres[0], addres[1]))
+                        self.s.sendto(
+                            json.dumps(nikname + ': ' + self.msg).encode(),
+                            (addres[0], addres[1]))
 
             except socket.error as msg:
                 print('Error Code : ' + str(msg[0]) + ' Message ' + msg[1])
@@ -50,17 +52,18 @@ class Client:
 
 
 class Server:
-    '''Сервер. Получает данные с других  сокетов и обрабатывает их'''
+    """Сервер. Получает данные с других  сокетов и обрабатывает их"""
 
     def checkdata(self, data):
-        '''Проверяет, существует ли такой пользователь в базе данных, и если нет, то добаляет его'''
+        """Проверяет, существует ли такой пользователь в базе данных,
+        и если нет, то добаляет его"""
         if None in dataarray:
             dataarray.append(data)
-        if not data in dataarray:
+        if data not in dataarray:
             dataarray.append(data)
 
     def __init__(self):
-        '''инициализирут сокет для получения данных'''
+        """инициализирут сокет для получения данных"""
 
         try:
             self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -79,10 +82,10 @@ class Server:
         print('Socket bind complete')
 
     def New_Thread(self):
-        '''
+        """
         получает данные и обрабатывает их. если поевляется новый пользователь,
         отправляет существующим новый список участников
-        '''
+        """
 
         global dataarray
         while 1:
@@ -94,7 +97,6 @@ class Server:
                 for e in dataarray:
                     self.s.sendto(json.dumps(dataarray).encode(), (e[0], e[1]))
                 continue
-
 
             elif type(self.data) == list:
                 dataarray = self.data
@@ -129,7 +131,3 @@ CLT = Client()
 
 t1 = threading.Thread(target=SRV.New_Thread).start()
 t2 = threading.Thread(target=CLT.New_Thread).start()
-
-
-
-
